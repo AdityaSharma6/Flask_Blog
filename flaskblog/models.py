@@ -1,20 +1,21 @@
 from datetime import datetime
-from flaskblog import db, LoginManager
+from flaskblog import db, login_manager
+from flask_login import UserMixin
 ''' This is the database models. It specifies the structure of the database. 
     It also enables you to run checks/ scripts on certain GETS/POSTS from/to the db
 '''
 
-def load_user(user_id):
-    return (User.query(id = user_id).first())
+@login_manager.user_loader
+def load_user(user_id): # This returns the user given the user's id. 
+    return User.query.get(int(user_id)) # .get() is faster than .query(user_id = id).first()
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     # By setting somethign to have unique = True, if a sign-up is done with a field that already exists, the website will throw an error. We must redirect the page.
     id = db.Column(db.Integer, primary_key = True)
     username = db.Column(db.String(20), unique = True, nullable = False) # Unique user names, can't be empty
     email = db.Column(db.String(150), unique = True, nullable = False) # Unique emails, can't be empty
     image_file = db.Column(db.String(20), nullable = False, default = "default.jpg") # Not unique pictures (allow for sharing)
     password = db.Column(db.String(60), nullable = False) # Passwords will be hashed
-
     # This database shares a relationship with another database. This is described by the db.relationship base. It is liked by author ID. It is a 1 - Many relationship
     posts = db.relationship("Post", backref="author", lazy = True) # A backref is like adding another column. Lazy means that SQLAlchemy will load as necessary 
 
