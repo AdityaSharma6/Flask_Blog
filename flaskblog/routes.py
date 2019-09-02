@@ -1,8 +1,8 @@
-from flask import render_template, url_for, flash, redirect
-from flask_login import login_user, current_user, logout_user
+from flask import render_template, url_for, flash, redirect, request
 from flaskblog import app, db, bcrypt
-from flaskblog.forms import RegistrationForm, LoginForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from flaskblog.models import User, Post
+from flask_login import login_user, current_user, logout_user, login_required
 
 
 
@@ -57,8 +57,12 @@ def login():
         user = User.query.filter_by(email=form.email.data.lower()).first() # It will check if the user exists in the database by quering based off the inputted email.
         if user and bcrypt.check_password_hash(user.password, form.password.data): # If the user exists (the email is in the db) and the password they entered is the same as the password in the db. It performs its check by unhashing the value in the db and comparing it to the form data.
                 flash(f"You have successfully logged into your account!", "success")
-                login_user(user, remember=form.remember.data)
-                return (redirect(url_for("home")))
+                login_user(user, remember=form.remember.data) # This is the method that logs in the user
+                next_page = request.args.get("next") # Args is a dictionary. This is used because when we attempt to access a page that can only be accessed after logging in, when we login we click again to reach our page. But this will remember which page we were trying to access and will store it. It will retrieve the query from the link
+                if next_page: # If there is a positive value in "next_page" send the user to the page they were about to access
+                    return redirect(next_page)
+                else: # Otherwise, send the user to the home page
+                    return (redirect(url_for("home")))
         else:
             flash(f"Your email or password was incorrect. Please try again!", "danger")
     return render_template("login.html", title = "Login", form=form)
@@ -67,3 +71,20 @@ def login():
 def logout():
     logout_user()
     return (redirect(url_for("home")))
+
+@app.route("/account", methods = ["GET", "POST"])
+@login_required
+def account():
+    form = UpdateAccountForm()
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash("Your account has been updated!", "success")
+        return redirect(url_for("home"))
+    elif request.method == "GET":
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+    image_file = url_for("static", filename = "profile_pics/" + current_user.image_file)
+    print(image_file)
+    return render_template("account.html", title = "Account", image_file=image_file, form=form)
