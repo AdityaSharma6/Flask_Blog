@@ -4,12 +4,12 @@
         <div class = "media">
             <img class = "rounded-circle account-img" src = "{{ image_file }}">
             <div class = "media-body">
-                <h2 class = "account-heading">{{ current_user.username }} </h2>
+                <h2 class = "account-heading">{{ current_user.username }} </h2> <!-- When you want to display variables, you don't include the percentage sign. When you want to write python code, you will have to use the percentage sign -->
                 <p class = "text-secondary">{{ current_user.email }}</p>
             </div>
         </div>
         <!-- INSERT FORM HERE -->
-            <form method = "POST" action=""> <!-- When creating a form, it needs to have a method and action in order to be able to process data entered into the form. -->
+            <form method = "POST" action="" enctype="multipart/form-data"> <!-- When creating a form, it needs to have a method and action in order to be able to process data entered into the form. -->
                 {{ form.hidden_tag() }} <!-- This is required in order to actually submit a form securely -->
                 <fieldset class = "form-group"> <!-- This is used to group together form elements -->
                     <legend class = "border-bottom mb-4"> Account Information </legend>
@@ -38,6 +38,15 @@
                             </div>
                         {% else %}
                             {{ form.email(class="form-control form-control-lg") }}
+                        {% endif %}
+                    </div>
+                    <div class = form-group>
+                        {{ form.picture.label() }} <!-- form.picture accesses the picture variable within the form class that is associated with the user's object. the ".label" part will get the information/text that we wrote in the forms.py page.-->
+                        {{ form.picture(class = "form-control-file") }} <!-- Bootstrap class for uploading files -->
+                        {% if form.picture.errors %} <!-- This is connected to the forms.py page. It checks for errors from the validators that we set up. Any errors, it'll create a list object here. -->
+                            {% for error in form.picture.errors %}
+                                <span class = "text-danger">{{ error }}</span> 
+                            {% endfor %}
                         {% endif %}
                     </div>
                 </fieldset>
