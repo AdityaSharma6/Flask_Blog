@@ -31,3 +31,24 @@
         - Development = SQLite, Production = Posgres etc...
         - It allows us to switch between database types seamlessly
     - pip install flask-sqlalchemy
+
+- Architecture
+    - AppName
+        - Static
+            - Will contain the CSS, JS
+        - Templates
+            - Will contain the HTML
+        - __init__.py
+        - forms.py
+            - When you have login or registration forms. It specifies the fields that the forms have and the details of it; the length of the username, if its mandatory, how many numbers/symbols etc...
+            - It contains all the details of the form within classes
+        - models.py
+            - This sets up the database tables
+            - Each class represents a table
+            - Learn about DB Mapping to understand more
+            - You first map your database on an online software then create it on code
+            - These are used to act as objects for each person potentially using your application
+        - routes.py
+            - This contains all the large main actions that could occur on the website. 
+            - Homepage, Register, Login, Logout, Account etc... All that is handled here
+        - run.py
