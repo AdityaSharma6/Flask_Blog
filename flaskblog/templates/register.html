@@ -21,7 +21,7 @@
                 </div>
                 <div class = "form-group">
                     {{ form.email.label(class="form-control-label") }}
-                    {% if form.email.errors %}
+                    {% if form.email.errors %} <!-- Any error that occurs, it is registered as an email error & is stored. -->
                         {{ form.email(class = "form-control form-control-lg is-invalid") }}
                         <div class = "invalid-feeback">
                             {% for error in form.email.errors %}
