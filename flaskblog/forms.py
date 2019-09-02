@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed # 1) Allows for the uploading of files. 2) Specifies the type of file that you want to upload
 from flask_login import current_user
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, BooleanField # 1) Specifies the data type. 2) Enables a password field to input passwords. 3) Enables submissions. 4) It is used for the "remember me" boxes
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError # Used for form validation. 1) it means that you can make certain fields require data. 2) The fields that information is entered into can take specific lengths. 3) This enables people to input emails. It checks the validity of the input, ensuring only emails are inputted. 4) If the validation recponses fail, it will raise a validation error
 from flaskblog.models import User
 
 class RegistrationForm(FlaskForm):
@@ -38,6 +39,7 @@ class UpdateAccountForm(FlaskForm):
     username = StringField("Username", validators = [DataRequired(), Length(min = 2)])
     email = StringField("Email", validators = [DataRequired(), Length(min = 5), Email()])
     submit = SubmitField("Update")
+    picture = FileField("Update Profile Picture", validators=[FileAllowed(["jgp", "png"])])
 
     def validate_username(self, username):
         if username.data != current_user.username: # Username is the field defined above. .data brings the raw text inputted
