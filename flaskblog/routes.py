@@ -1,31 +1,17 @@
-import secrets
 import os
-from flask import render_template, url_for, flash, redirect, request
+import secrets
+from PIL import Image
+from flask import render_template, url_for, flash, redirect, request, abort
 from flaskblog import app, db, bcrypt
-from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from flaskblog.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
 
 
-
-posts = [
-    {
-        "author": "Aditya Sharma",
-        "title": "First Blog",
-        "content": "I am the king of Wakanda",
-        "date_posted": "April 20, 2018"
-    },
-    {
-        "author": "King Sharma",
-        "title": "Second Blog",
-        "content": "Wakanda is Mine Now",
-        "date_posted": "April 20, 2018"
-    }
-]
-
 @app.route("/") # This is a route (decoration) that handles the backend work.
 @app.route("/home")
 def home():
+    posts = Post.query.all() # Grabs all the posts from database
     return (render_template("home.html", posts=posts))
 
 
@@ -80,7 +66,11 @@ def save_picture(form_picture):
     file_name, file_extension = os.path.splitext(form_picture.filename) # Grabbing the extension of the file
     picture_filename = random_hex + file_extension # Creating a new file name
     picture_path = os.path.join(app.root_path, "static/profile_pics", picture_filename) # Uploading the picture to a desired path
-    form_picture.save(picture_path)
+    
+    output_size = (125, 125) # Specify size of image
+    i = Image.open(form_picture) # Opened the picture and stored its contents
+    i.thumbnail(output_size) # Resizing the picture to a thumbnail of the specified size
+    i.save(picture_path) # Saving the picture 
 
     return picture_filename
 
@@ -103,3 +93,52 @@ def account():
     image_file = url_for("static", filename = "profile_pics/" + current_user.image_file)
     
     return render_template("account.html", title = "Account", image_file=image_file, form=form)
+    
+@app.route("/post/new", methods=['GET', 'POST'])
+@login_required
+def new_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash('Your post has been created!', 'success')
+        return redirect(url_for('home'))
+    return render_template('create_post.html', title='New Post', form=form, legend='New Post')
+
+
+@app.route("/post/<int:post_id>")
+def post(post_id):
+    post = Post.query.get_or_404(post_id) # Will look for the post. If the post is not found, it will throw an 404 error
+    return render_template('post.html', title=post.title, post=post)
+
+
+@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id) # Will look for the post. If the post is not found, it will throw an 404 error
+    if post.author != current_user: # Ensures that only the author of the post can access the post
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash('Your post has been updated!', 'success')
+        return redirect(url_for('post', post_id=post.id))
+    elif request.method == 'GET': # There are continous get requests happening and until a post request happens (button press), this will keep being displayed
+        form.title.data = post.title
+        form.content.data = post.content
+    return render_template('create_post.html', title='Update Post', form=form, legend='Update Post')
+
+
+@app.route("/post/<int:post_id>/delete", methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Your post has been deleted!', 'success')
+    return redirect(url_for('home'))
